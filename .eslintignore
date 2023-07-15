@@ -8,3 +8,4 @@ reset.d.ts
 prisma
 test
 integrity.cjs
+/src/*
