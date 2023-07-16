@@ -75,3 +75,13 @@ export const createGqlResponseSchema = {
 // export const schema = new GraphQLSchema({
 //   query: RootQuery
 // });
+
+// const queries = new graphql.GraphQLObjectType({
+//   name: "Query",
+//   fields:() => ({
+//     ...UserQueries,
+//     ...PostQueries,
+//     ...ProfileQueries,
+//     ...MemberTypeQueries
+//   }),
+// })

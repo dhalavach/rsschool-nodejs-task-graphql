@@ -6,14 +6,20 @@ import {
   GraphQLSchema,
   GraphQLString,
   graphql,
+  parse,
+  validate,
 } from 'graphql';
 import { MemberType } from './types/member.js';
 import { FastifyRequest, RouteGenericInterface } from 'fastify';
 // import { schema } from './schemas.js';
 import { PrismaClient } from '@prisma/client';
+import { ProfileType } from './types/profile.js';
+import { PostType } from './types/post.js';
+import depthLimit from 'graphql-depth-limit';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
-  const { prisma } = fastify;
+  //const { prisma } = fastify;
+  const prisma = new PrismaClient();
 
   fastify.route({
     url: '/',
@@ -30,15 +36,14 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
       // },
     },
 
-    async handler(req, reply) {
+    async handler(req) {
       const query = new GraphQLObjectType({
         name: 'query',
         fields: {
           getMemberType: {
             type: MemberType,
             args: { id: { type: GraphQLString } },
-
-            resolve: async (parent, args) => {
+            resolve: async (_, args) => {
               const memberType = await prisma.memberType.findUnique({
                 where: {
                   id: args.id,
@@ -47,6 +52,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
               return memberType;
             },
           },
+
           getAllMemberTypes: {
             type: new GraphQLList(MemberType),
             resolve: async () => {
@@ -54,19 +60,42 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
               return res;
             },
           },
+
+          getAllProfiles: {
+            type: new GraphQLList(ProfileType),
+            resolve: async () => {
+              return await prisma.profile.findMany();
+            },
+          },
+
+          getAllPosts: {
+            type: new GraphQLList(PostType),
+            resolve: async () => {
+              return await prisma.post.findMany();
+            },
+          },
         },
       });
 
-      const testSchema = new GraphQLSchema({
+      const schema = new GraphQLSchema({
         query: query,
       });
 
+      const parsedQuery = parse(req.body.query);
+      const validationErrors = validate(schema, parsedQuery, [depthLimit(5)]);
+      if (validationErrors && validationErrors.length != 0) {
+        return { data: '', errors: validationErrors };
+      }
+
       const result = await graphql({
-        schema: testSchema,
-        source: String(req.body?.query), //request.body.query
+        schema: schema,
+        source: req.body?.query, //request.body.query
         contextValue: fastify,
+        variableValues: req.body.variables,
       });
 
+      //return { data: result.data, errors: result.errors };
+      //return { ...result.data, ...result.errors };
       return result;
     },
   });
