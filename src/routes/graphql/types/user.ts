@@ -27,10 +27,10 @@ export const UserType = new GraphQLObjectType({
     },
     profile: {
       type: ProfileType,
-      resolve: async (args) => {
+      resolve: async ({ id }) => {
         return await new PrismaClient().profile.findFirst({
           where: {
-            userId: args.id,
+            userId: id,
           },
         });
       },
@@ -40,18 +40,18 @@ export const UserType = new GraphQLObjectType({
       resolve: async (args) => {
         return await new PrismaClient().post.findMany({
           where: {
-            authorId: args.id, //check
+            authorId: args.id,
           },
         });
       },
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async (args) => {
+      resolve: async ({ id }) => {
         return (
           await new PrismaClient().subscribersOnAuthors.findMany({
             where: {
-              subscriberId: args.id,
+              subscriberId: id,
             },
             select: {
               author: true,
@@ -62,11 +62,11 @@ export const UserType = new GraphQLObjectType({
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async (args) => {
+      resolve: async ({ id }) => {
         return (
           await new PrismaClient().subscribersOnAuthors.findMany({
             where: {
-              authorId: args.id,
+              authorId: id,
             },
             select: {
               subsriber: true,
@@ -86,7 +86,7 @@ export const CreateUser = new GraphQLInputObjectType({
   },
 });
 
-export const ChangeUserInput = new GraphQLInputObjectType({
+export const ChangeUser = new GraphQLInputObjectType({
   name: 'ChangeUser',
   fields: {
     name: { type: GraphQLString },

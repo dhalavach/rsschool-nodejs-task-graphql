@@ -9,19 +9,19 @@ import { PrismaClient } from '@prisma/client';
 //   BUSINESS = 'business',
 // }
 
-// export const MemberTypeId = new GraphQLEnumType({
-//   name: "MemberTypeId",
-//   values: {
-//     basic: { value: "basic"},
-//     business: {value: "business"},
-//   }
-// })
+export const MemberTypeId = new GraphQLEnumType({
+  name: 'MemberTypeId',
+  values: {
+    basic: { value: 'basic' },
+    business: { value: 'business' },
+  },
+});
 
 export const MemberType = new GraphQLObjectType({
   name: 'member',
   fields: () => ({
     id: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: MemberTypeId,
     },
     discount: {
       type: new GraphQLNonNull(GraphQLFloat),
@@ -31,10 +31,10 @@ export const MemberType = new GraphQLObjectType({
     },
     profiles: {
       type: new GraphQLList(ProfileType),
-      resolve: async (args) => {
+      resolve: async ({ id }) => {
         return await new PrismaClient().profile.findMany({
           where: {
-            memberTypeId: args.id,
+            memberTypeId: id,
           },
         });
       },
