@@ -14,7 +14,7 @@ import { UUIDType } from './uuid.js';
 import { PrismaClient } from '@prisma/client';
 
 export const UserType = new GraphQLObjectType({
-  name: 'User',
+  name: 'UserType',
   fields: () => ({
     id: {
       type: new GraphQLNonNull(UUIDType),
@@ -67,27 +67,27 @@ export const UserType = new GraphQLObjectType({
             authorId: id,
           },
           select: {
-            subsriber: true,
+            subscriber: true,
           },
         });
-        return temp.map((s) => s.subsriber);
+        return temp.map((s) => s.subscriber);
       },
     },
   }),
 });
 
-export const CreateUser = new GraphQLInputObjectType({
-  name: 'CreateUser',
-  fields: {
+export const CreateUserInput = new GraphQLInputObjectType({
+  name: 'CreateUserInput',
+  fields: () => ({
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
-  },
+  }),
 });
 
-export const ChangeUser = new GraphQLInputObjectType({
-  name: 'ChangeUser',
-  fields: {
+export const ChangeUserInput = new GraphQLInputObjectType({
+  name: 'ChangeUserInput',
+  fields: () => ({
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
-  },
+  }),
 });

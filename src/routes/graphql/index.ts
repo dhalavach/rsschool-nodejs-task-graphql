@@ -15,10 +15,10 @@ import { MemberType, MemberTypeId } from './types/member.js';
 import { FastifyRequest, RouteGenericInterface } from 'fastify';
 // import { schema } from './schemas.js';
 import { PrismaClient } from '@prisma/client';
-import { ChangeProfile, CreateProfile, ProfileType } from './types/profile.js';
-import { ChangePost, CreatePost, PostType } from './types/post.js';
+import { ChangeProfileInput, CreateProfileInput, ProfileType } from './types/profile.js';
+import { ChangePostInput, CreatePostInput, PostType } from './types/post.js';
 import depthLimit from 'graphql-depth-limit';
-import { ChangeUser, CreateUser, UserType } from './types/user.js';
+import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
@@ -126,24 +126,24 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
           createUser: {
             type: UserType,
             args: {
-              data: { type: new GraphQLNonNull(CreateUser) },
+              dto: { type: new GraphQLNonNull(CreateUserInput) },
             },
-            resolve: async (parent, { data }) => {
-              return prisma.user.create({ data: data });
+            resolve: async (parent, { dto }) => {
+              return prisma.user.create({ data: dto });
             },
           },
           changeUser: {
             type: UserType,
             args: {
               id: { type: new GraphQLNonNull(UUIDType) },
-              data: { type: new GraphQLNonNull(ChangeUser) },
+              dto: { type: new GraphQLNonNull(ChangeUserInput) },
             },
-            resolve: async (parent, { id, data }) => {
+            resolve: async (parent, { id, dto }) => {
               return await prisma.user.update({
                 where: {
                   id: id,
                 },
-                data: data,
+                data: dto,
               });
             },
           },
@@ -171,24 +171,29 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
           createProfile: {
             type: ProfileType,
             args: {
-              data: { type: CreateProfile },
+              dto: { type: new GraphQLNonNull(CreateProfileInput) },
             },
-            resolve: async (parents, { data }) => {
-              return await prisma.profile.create({ data: data });
+
+            resolve: async (parents, { dto }) => {
+              try {
+                return await prisma.profile.create({ data: dto });
+              } catch (error) {
+                console.log(error);
+              }
             },
           },
           changeProfile: {
             type: ProfileType,
             args: {
               id: { type: new GraphQLNonNull(UUIDType) },
-              data: { type: ChangeProfile },
+              dto: { type: new GraphQLNonNull(ChangeProfileInput) },
             },
-            resolve: async (parent, { id, data }) => {
+            resolve: async (parent, { id, dto }) => {
               return await prisma.profile.update({
                 where: {
-                  userId: id,
+                  id: id,
                 },
-                data: data,
+                data: dto,
               });
             },
           },
@@ -199,9 +204,9 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
             },
             resolve: async (parent, { id }) => {
               try {
-                await prisma.profile.findFirst({
+                await prisma.profile.delete({
                   where: {
-                    userId: id,
+                    id: id,
                   },
                 });
                 return true;
@@ -216,29 +221,24 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
           createPost: {
             type: PostType,
             args: {
-              data: { type: CreatePost },
+              dto: { type: CreatePostInput },
             },
-            resolve: async (parent, { data }) => {
-              // const user = await prisma.user.findFirst({
-              //   where: {
-              //     id: data.authorId,
-              //   },
-              // });
-              return await prisma.post.create({ data: data });
+            resolve: async (parent, { dto }) => {
+              return new PrismaClient().post.create({ data: dto });
             },
           },
           changePost: {
             type: PostType,
             args: {
               id: { type: new GraphQLNonNull(UUIDType) },
-              data: { type: new GraphQLNonNull(ChangePost) },
+              dto: { type: new GraphQLNonNull(ChangePostInput) },
             },
-            resolve: async (parent, { id, data }) => {
-              return await prisma.post.update({
+            resolve: async (parent, { id, dto }) => {
+              return await new PrismaClient().post.update({
                 where: {
                   id: id,
                 },
-                data: data,
+                data: dto,
               });
             },
           },
@@ -336,11 +336,13 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
         return { data: '', errors: validationErrors };
       }
 
-      return await graphql({
+      const result = await graphql({
         schema: schema,
         source: req.body.query,
         variableValues: req.body.variables,
       });
+      console.log(result.errors);
+      return { data: result.data, errors: result.errors };
     },
   });
 };
