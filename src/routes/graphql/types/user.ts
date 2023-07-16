@@ -14,7 +14,7 @@ import { UUIDType } from './uuid.js';
 import { PrismaClient } from '@prisma/client';
 
 export const UserType = new GraphQLObjectType({
-  name: 'user',
+  name: 'User',
   fields: () => ({
     id: {
       type: new GraphQLNonNull(UUIDType),
@@ -48,31 +48,29 @@ export const UserType = new GraphQLObjectType({
     userSubscribedTo: {
       type: new GraphQLList(UserType),
       resolve: async ({ id }) => {
-        return (
-          await new PrismaClient().subscribersOnAuthors.findMany({
-            where: {
-              subscriberId: id,
-            },
-            select: {
-              author: true,
-            },
-          })
-        ).map((a) => a.author);
+        let temp = await new PrismaClient().subscribersOnAuthors.findMany({
+          where: {
+            subscriberId: id,
+          },
+          select: {
+            author: true,
+          },
+        });
+        return temp.map((a) => a.author);
       },
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
       resolve: async ({ id }) => {
-        return (
-          await new PrismaClient().subscribersOnAuthors.findMany({
-            where: {
-              authorId: id,
-            },
-            select: {
-              subsriber: true,
-            },
-          })
-        ).map((s) => s.subsriber);
+        let temp = await new PrismaClient().subscribersOnAuthors.findMany({
+          where: {
+            authorId: id,
+          },
+          select: {
+            subsriber: true,
+          },
+        });
+        return temp.map((s) => s.subsriber);
       },
     },
   }),

@@ -20,18 +20,18 @@ export const PostType = new GraphQLObjectType({
     content: {
       type: new GraphQLNonNull(GraphQLString),
     },
+    authorId: {
+      type: new GraphQLNonNull(UUIDType),
+    },
     author: {
       type: new GraphQLNonNull(UserType),
-      resolve(args) {
-        return new PrismaClient().user.findFirst({
+      resolve: async ({ authorId }) => {
+        return await new PrismaClient().user.findFirst({
           where: {
-            id: args.authorId,
+            id: authorId,
           },
         });
       },
-    },
-    authorId: {
-      type: new GraphQLNonNull(UUIDType),
     },
   }),
 });
