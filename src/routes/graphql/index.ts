@@ -176,7 +176,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
 
             resolve: async (parents, { dto }) => {
               try {
-                return await prisma.profile.create({ data: dto });
+                return prisma.profile.create({ data: dto });
               } catch (error) {
                 console.log(error);
               }
@@ -224,7 +224,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
               dto: { type: CreatePostInput },
             },
             resolve: async (parent, { dto }) => {
-              return new PrismaClient().post.create({ data: dto });
+              return prisma.post.create({ data: dto });
             },
           },
           changePost: {
@@ -234,7 +234,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
               dto: { type: new GraphQLNonNull(ChangePostInput) },
             },
             resolve: async (parent, { id, dto }) => {
-              return await new PrismaClient().post.update({
+              return await prisma.post.update({
                 where: {
                   id: id,
                 },

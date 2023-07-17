@@ -15,14 +15,14 @@ export const ProfileType = new GraphQLObjectType({
   name: 'ProfileType',
   fields: () => ({
     id: { type: new GraphQLNonNull(UUIDType) },
-    isMale: { type: GraphQLBoolean },
-    yearOfBirth: { type: GraphQLInt },
+    isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
+    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
     userId: { type: new GraphQLNonNull(UUIDType) },
 
     user: {
       type: UserType,
-      resolve: async (parent, { userId }) => {
-        return await prisma.user.findFirst({
+      resolve: async ( { userId }) => {
+        return  prisma.user.findFirst({
           where: {
             id: userId,
           },
@@ -31,7 +31,7 @@ export const ProfileType = new GraphQLObjectType({
     },
     memberType: {
       type: MemberType,
-      resolve: ({ memberTypeId }) => {
+      resolve: async ({ memberTypeId }) => {
         return prisma.memberType.findFirst({
           where: {
             id: memberTypeId,
@@ -60,9 +60,9 @@ export const ChangeProfileInput = new GraphQLInputObjectType({
 export const CreateProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
   fields: () => ({
-    userId: { type: new GraphQLNonNull(GraphQLString) },
+    userId: { type: new GraphQLNonNull(UUIDType) },
     memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
-    isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
-    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
   }),
 });
