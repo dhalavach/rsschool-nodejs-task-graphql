@@ -66,7 +66,7 @@ export const memberLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<MemberType>> => {
     const arr = await prisma.memberType.findMany({
       where: {
-        id: { in: keys as Prisma.Enumerable<string> },
+        id: { in: keys as string[] |undefined },
       },
     });
     const map = new Map();
@@ -85,7 +85,7 @@ export const postLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Post[]>> => {
     const posts: Array<Post> = await prisma.post.findMany({
       where: {
-        authorId: { in: keys as Prisma.Enumerable<string> },
+        authorId: { in: keys as string[] | undefined },
       },
     });
     const map = new Map();
@@ -109,7 +109,7 @@ export const userSubscribedToLoader = (prisma: PrismaClient) => {
   const getSubscribersById = async (keys: Readonly<string[]>) => {
     let arr = await prisma.subscribersOnAuthors.findMany({
       where: {
-        subscriberId: { in: keys as Prisma.Enumerable<string> },
+        subscriberId: { in: keys as string[] |undefined },
       },
       select: {
         author: true,
@@ -134,7 +134,7 @@ export const subscribedToUserLoader = (prisma: PrismaClient) => {
   const getSubscriptions = async (keys: Readonly<string[]>) => {
     const temp = await prisma.subscribersOnAuthors.findMany({
       where: {
-        authorId: { in: keys as Prisma.Enumerable<string> },
+        authorId: { in: keys as string[] | undefined },
       },
       select: {
         subscriber: true,
