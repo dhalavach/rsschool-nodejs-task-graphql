@@ -9,7 +9,6 @@ import { UUIDType } from './uuid.js';
 import { UserType } from './user.js';
 import { PrismaClient } from '@prisma/client';
 import { MemberType, MemberTypeId } from './member.js';
-const prisma = new PrismaClient();
 
 export const ProfileType = new GraphQLObjectType({
   name: 'ProfileType',
@@ -21,25 +20,27 @@ export const ProfileType = new GraphQLObjectType({
 
     user: {
       type: UserType,
-      resolve: async ( { userId }) => {
-        return  prisma.user.findFirst({
+      resolve: async ({ userId }) => {
+        return new PrismaClient().user.findFirst({
           where: {
             id: userId,
           },
         });
       },
     },
+
     memberType: {
       type: MemberType,
-      resolve: async ({ memberTypeId }) => {
-        return prisma.memberType.findFirst({
-          where: {
-            id: memberTypeId,
-          },
-        });
+      resolve: async ({ memberTypeId }, args, context) => {
+        await context.loaders.memberLoader.load(memberTypeId);
+        // return await context.prisma.memberType.findFirst({
+        //   where: {
+        //     id: memberTypeId,
+        //   },
+        // });
       },
     },
-    memberTypeId: { type: new GraphQLNonNull(GraphQLString) },
+    memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
   }),
 });
 

@@ -20,9 +20,17 @@ import { ChangePostInput, CreatePostInput, PostType } from './types/post.js';
 import depthLimit from 'graphql-depth-limit';
 import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
+import {
+  memberLoader,
+  postLoader,
+  profileLoader,
+  subscribedToUserLoader,
+  userSubscribedToLoader,
+} from './loader/loader.js';
+import { profile } from 'console';
 
-const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
-  //const { prisma } = fastify;
+const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
+  // const { prisma } = fastify;
   const prisma = new PrismaClient();
 
   fastify.route({
@@ -335,11 +343,23 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify): Promise<void> => {
       if (validationErrors && validationErrors.length !== 0) {
         return { data: '', errors: validationErrors };
       }
+      //refactor
 
       const result = await graphql({
         schema: schema,
         source: req.body.query,
         variableValues: req.body.variables,
+        contextValue: {
+          loaders: {
+            profileLoader: profileLoader(prisma),
+            memberLoader: memberLoader(prisma),
+            postLoader: postLoader(prisma),
+            userSubscribedToLoader: userSubscribedToLoader(prisma),
+            subscribedToUserLoader: subscribedToUserLoader(prisma),
+          },
+          data: {},
+          prisma: prisma,
+        },
       });
       console.log(result.errors);
       return { data: result.data, errors: result.errors };

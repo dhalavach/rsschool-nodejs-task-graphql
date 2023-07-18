@@ -27,50 +27,45 @@ export const UserType = new GraphQLObjectType({
     },
     profile: {
       type: ProfileType,
-      resolve: async ({ id }) => {
-        return await new PrismaClient().profile.findFirst({
-          where: {
-            userId: id,
-          },
-        });
+      resolve: async (source, args, context) => {
+        return await context.loaders.profileLoader.load(source?.id);
       },
     },
     posts: {
       type: new GraphQLList(PostType),
-      resolve: async (args) => {
-        return await new PrismaClient().post.findMany({
-          where: {
-            authorId: args.id,
-          },
-        });
+      resolve: async (source, args, context) => {
+        return await context.loaders.postLoader.load(source?.id);
       },
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async ({ id }) => {
-        let temp = await new PrismaClient().subscribersOnAuthors.findMany({
-          where: {
-            subscriberId: id,
-          },
-          select: {
-            author: true,
-          },
-        });
-        return temp.map((a) => a.author);
+      resolve: async (source, args, context) => {
+        // let temp = await new PrismaClient().subscribersOnAuthors.findMany({
+        //   where: {
+        //     subscriberId: id,
+        //   },
+        //   select: {
+        //     author: true,
+        //   },
+        // });
+        // return temp.map((a) => a.author);
+
+        return await context.loaders.userSubscribedToLoader.load(source?.id);
       },
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async ({ id }) => {
-        let temp = await new PrismaClient().subscribersOnAuthors.findMany({
-          where: {
-            authorId: id,
-          },
-          select: {
-            subscriber: true,
-          },
-        });
-        return temp.map((s) => s.subscriber);
+      resolve: async (source, args, context) => {
+        // let temp = await new PrismaClient().subscribersOnAuthors.findMany({
+        //   where: {
+        //     authorId: id,
+        //   },
+        //   select: {
+        //     subscriber: true,
+        //   },
+        // });
+        // return temp.map((s) => s.subscriber);
+        return await context.loaders.subscribedToUserLoader.load(source?.id);
       },
     },
   }),

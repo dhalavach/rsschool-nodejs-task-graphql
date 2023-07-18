@@ -3,6 +3,7 @@ import { GraphQLEnumType, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 
 import { GraphQLFloat, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { ProfileType } from './profile.js';
 import { PrismaClient } from '@prisma/client';
+// import { PrismaClient } from '@prisma/client';
 
 // enum MemberTypeId {
 //   BASIC = 'basic',
@@ -18,7 +19,7 @@ export const MemberTypeId = new GraphQLEnumType({
 });
 
 export const MemberType = new GraphQLObjectType({
-  name: 'member',
+  name: 'MemberType',
   fields: () => ({
     id: {
       type: MemberTypeId,

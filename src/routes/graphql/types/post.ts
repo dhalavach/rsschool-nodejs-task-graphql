@@ -25,8 +25,8 @@ export const PostType = new GraphQLObjectType({
     },
     author: {
       type: UserType,
-      resolve: async ({ authorId }) => {
-        return new PrismaClient().user.findFirst({
+      resolve: async ({authorId}, args, context) => {
+        return context.prisma.user.findFirst({
           where: {
             id: authorId,
           },
