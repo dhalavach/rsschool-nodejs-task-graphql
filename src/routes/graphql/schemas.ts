@@ -1,4 +1,6 @@
 import { Type } from '@fastify/type-provider-typebox';
+import { GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import { MemberType } from './types/member.js';
 
 export const gqlResponseSchema = Type.Partial(
   Type.Object({
