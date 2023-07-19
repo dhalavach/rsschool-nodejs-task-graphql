@@ -32,12 +32,12 @@ export const ProfileType = new GraphQLObjectType({
     memberType: {
       type: MemberType,
       resolve: async ({ memberTypeId }, args, context) => {
-        await context.loaders.memberLoader.load(memberTypeId);
-        // return await context.prisma.memberType.findFirst({
-        //   where: {
-        //     id: memberTypeId,
-        //   },
-        // });
+        //await context.loaders.memberLoader.load(memberTypeId);
+        return await context.prisma.memberType.findFirst({
+          where: {
+            id: memberTypeId,
+          },
+        });
       },
     },
     memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
