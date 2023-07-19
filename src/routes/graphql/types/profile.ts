@@ -30,11 +30,6 @@ export const ProfileType = new GraphQLObjectType({
         // console.log('calling member type loader from profile type...');
         const result = await context.loaders.memberLoader.load(source.memberTypeId); //id?
         return result;
-        // return await context.prisma.memberType.findFirst({
-        //   where: {
-        //     id: memberTypeId,
-        //   },
-        // });
       },
     },
     memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
@@ -44,7 +39,6 @@ export const ProfileType = new GraphQLObjectType({
 export const ChangeProfileInput = new GraphQLInputObjectType({
   name: 'ChangeProfileInput',
   fields: () => ({
-    //userId: { type: UUIDType },
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
   }),

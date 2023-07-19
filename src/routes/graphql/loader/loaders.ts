@@ -5,7 +5,6 @@ import { postCache } from '../index.js';
 
 export const profileLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Profile>> => {
-    // const LruCache = new Cache(100);
     const profiles = (await prisma.profile.findMany({
       where: {
         userId: { in: keys as string[] },
@@ -19,7 +18,6 @@ export const profileLoader = (prisma: PrismaClient) => {
     keys.forEach((key) => {
       arr.push(map.get(key) as Profile);
     });
-    //return new Promise((resolve) => resolve(arr));
     return arr;
   });
 };
@@ -32,21 +30,17 @@ export const memberLoader = (prisma: PrismaClient) => {
       },
     });
 
-    // if (!memberTypesArr) memberTypesArr = [];
-
     const map = new Map();
     memberTypesArr.forEach((memberType) => map.set(memberType.id, memberType));
     const result = new Array<MemberType>();
     keys.forEach((key) => {
       result.push(map.get(key));
     });
-    //return new Promise((resolve) => resolve(result));
     return result;
   });
-  //return new DataLoader(getMembersById);
 };
 
-export const makePostLoader = (prisma: PrismaClient) => {
+export const postLoader = (prisma: PrismaClient) => {
   return new DataLoader(
     async (keys: Readonly<string[]>): Promise<Array<Post[]>> => {
       const posts: Array<Post> = await prisma.post.findMany({
@@ -65,13 +59,10 @@ export const makePostLoader = (prisma: PrismaClient) => {
       keys.forEach((key) => {
         result.push(map.get(key) as Post[]);
       });
-      //return new Promise((resolve) => resolve(result));
       return result;
     },
     // { cacheMap: postCache },
   );
-
-  //return new DataLoader(getPostsById);
 };
 
 export const userSubscribedToLoader = (prisma: PrismaClient) => {
@@ -85,7 +76,6 @@ export const userSubscribedToLoader = (prisma: PrismaClient) => {
         subscriberId: true,
       },
     });
-    // return arr.map((a) => a.author);
     const map = new Map();
     arr.forEach((e) => {
       let subscriptionsArr = map.get(e) ? map.get(e) : [];
@@ -95,10 +85,7 @@ export const userSubscribedToLoader = (prisma: PrismaClient) => {
     const result = new Array<any>();
     keys.forEach((k) => result.push(map.get(k)));
     return result;
-   // return new Promise((resolve) => resolve(result));
   });
-
-  //return new DataLoader(getSubscribersById);
 };
 
 export const subscribedToUserLoader = (prisma: PrismaClient) => {
@@ -122,8 +109,5 @@ export const subscribedToUserLoader = (prisma: PrismaClient) => {
     const result = new Array<any>();
     keys.forEach((key) => result.push(map.get(key)));
     return result;
-    //return new Promise((resolve) => resolve(result));
   });
-
-  //return new DataLoader(getSubscriptions);
 };

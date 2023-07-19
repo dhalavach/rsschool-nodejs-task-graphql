@@ -1,16 +1,28 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
-import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString, graphql, parse, validate } from 'graphql';
+import {
+  GraphQLBoolean,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+  graphql,
+  parse,
+  validate,
+} from 'graphql';
 import { MemberType, MemberTypeId } from './types/member.js';
-import { PrismaClient, User } from '@prisma/client';
 import { ChangeProfileInput, CreateProfileInput, ProfileType } from './types/profile.js';
 import { ChangePostInput, CreatePostInput, PostType } from './types/post.js';
 import depthLimit from 'graphql-depth-limit';
 import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
-import { memberLoader, makePostLoader, profileLoader, subscribedToUserLoader, userSubscribedToLoader } from './loader/loader.js';
-import * as gqlResolveInfo from 'graphql-parse-resolve-info';
-
+import {
+  memberLoader,
+  postLoader,
+  profileLoader,
+  subscribedToUserLoader,
+  userSubscribedToLoader,
+} from './loader/loaders.js';
 import { Cache } from './helpers.js';
 import { ResolveTree, parseResolveInfo, simplifyParsedResolveInfoFragmentWithType } from 'graphql-parse-resolve-info';
 
@@ -29,7 +41,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
 
-    async handler(req, reply) {
+    async handler(req) {
       const query = new GraphQLObjectType({
         name: 'query',
         fields: {
@@ -93,51 +105,49 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           users: {
             type: new GraphQLList(UserType),
             resolve: async (source, args, context, resolveInfo) => {
-              const simplifiedFragment = simplifyParsedResolveInfoFragmentWithType(parseResolveInfo(resolveInfo) as ResolveTree, new GraphQLNonNull(UserType));
-
-              const userIsSubscribedToSomebody = !!simplifiedFragment.fields['userSubscribedTo'];
-              const isSomebodySubscribedToUser = !!simplifiedFragment.fields['subscribedToUser'];
-              console.log('boolean flag user is subscribed to somebody: ' + userIsSubscribedToSomebody);
-              console.log('boolean flag somebody is subscribed to user: ' + isSomebodySubscribedToUser);
+              const simplifiedFragment = simplifyParsedResolveInfoFragmentWithType(
+                parseResolveInfo(resolveInfo) as ResolveTree,
+                UserType,
+              );
 
               const users = await context.prisma.user.findMany({
                 include: {
-                  userSubscribedTo: userIsSubscribedToSomebody,
-                  subscribedToUser: isSomebodySubscribedToUser,
+                  userSubscribedTo: !!simplifiedFragment.fields.hasOwnProperty('userSubscribedTo'),
+                  subscribedToUser: !!simplifiedFragment.fields.hasOwnProperty('subscribedToUser'),
                 },
               });
 
-              if (isSomebodySubscribedToUser) {
+              if (!!simplifiedFragment.fields.hasOwnProperty('subscribedToUser')) {
                 const map = new Map();
-                users?.map((user: any) =>
+                users.map((user: { id: any; subscribedToUser: any[]; }) =>
                   map.set(
                     user.id,
-                    user.subscribedToUser?.map((subscriber: any) => {
+                    user.subscribedToUser.map((subscriber: any) => {
                       const subscriberId = subscriber.subscriberId;
                       return users.find((user: any) => user.id === subscriberId);
                     }),
                   ),
                 );
-                context.data.subs = map;
+                context.data.subscribers = map;
               } else {
-                context.data.subs = undefined;
+                context.data.subscribers = null;
               }
 
-              if (userIsSubscribedToSomebody) {
-                const subs = new Map();
-                users?.map((user) =>
-                  subs.set(
+              if (!!simplifiedFragment.fields.hasOwnProperty('userSubscribedTo')) {
+                const subscriptions = new Map();
+                users.map((user: { id: any; userSubscribedTo: any[]; }) =>
+                  subscriptions.set(
                     user.id,
-                    user?.userSubscribedTo?.map((sub) => {
+                    user.userSubscribedTo.map((sub: { authorId: any; }) => {
                       const authorId = sub.authorId;
-                      return users.find((user) => user.id === authorId);
+                      return users.find((user: { id: any; }) => user.id === authorId);
                     }),
                   ),
                 );
-                context.data.subTo = subs;
+                context.data.subscriptions = subscriptions;
                 return users;
               } else {
-                context.data.subTo = undefined;
+                context.data.subscriptions = null;
               }
               return users;
             },
@@ -302,24 +312,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             },
           },
 
-          // updateMemberType: {
-          //   type: memberTypeGraphType,
-          //   args: {
-          //     id: { type: GraphQLString },
-          //     data: { type: memberTypeUpdateType },
-          //   },
-          //   resolve: async (parents, args) => {
-          //     const data = request.body.variables?.data as MemberTypeEntity;
-          //     const id = request.body.variables?.id as string;
-          //     const memberType = await fastify.db.memberTypes.findOne({
-          //       key: 'id',
-          //       equals: id,
-          //     });
-          //     if (memberType) {
-          //       return await fastify.db.memberTypes.change(id, data);
-          //     }
-          //   },
-          // },
 
           //Subscriptions
           subscribeTo: {
@@ -384,7 +376,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           loaders: {
             profileLoader: profileLoader(prisma),
             memberLoader: memberLoader(prisma),
-            postLoader: makePostLoader(prisma),
+            postLoader: postLoader(prisma),
             userSubscribedToLoader: userSubscribedToLoader(prisma),
             subscribedToUserLoader: subscribedToUserLoader(prisma),
           },
@@ -392,7 +384,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           prisma: prisma,
         },
       });
-      console.log(result.errors);
+      // console.log(result.errors);
       return { data: result.data, errors: result.errors };
     },
   });

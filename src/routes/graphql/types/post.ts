@@ -6,7 +6,6 @@ import {
 } from 'graphql';
 import { UserType } from './user.js';
 import { UUIDType } from './uuid.js';
-import { PrismaClient } from '@prisma/client';
 
 export const PostType = new GraphQLObjectType({
   name: 'PostType',

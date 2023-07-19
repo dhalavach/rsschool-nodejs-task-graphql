@@ -1,14 +1,8 @@
 // import { Type } from '@fastify/type-provider-typebox';
 import { GraphQLEnumType, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
-import { GraphQLFloat, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
+import { GraphQLFloat, GraphQLInt } from 'graphql';
 import { ProfileType } from './profile.js';
-import { PrismaClient } from '@prisma/client';
-// import { PrismaClient } from '@prisma/client';
 
-// enum MemberTypeId {
-//   BASIC = 'basic',
-//   BUSINESS = 'business',
-// }
 
 export const MemberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -33,7 +27,6 @@ export const MemberType = new GraphQLObjectType({
     profiles: {
       type: new GraphQLList(ProfileType),
       resolve: async ({id}, args, context) => {
-        // return await context.loaders.profileLoader.load(source?.id);
         return await context.prisma.profile.findMany({
           where: {
             memberTypeId: id,

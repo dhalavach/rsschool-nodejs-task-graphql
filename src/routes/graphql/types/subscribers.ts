@@ -1,5 +1,5 @@
-import { GraphQLFloat, GraphQLList, GraphQLObjectType } from 'graphql';
-import { GraphQLBoolean, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
+import { GraphQLObjectType } from 'graphql';
+import { GraphQLString } from 'graphql';
 import { UserType } from './user.js';
 
 export const SubscribersOnAuthorsType = new GraphQLObjectType({
