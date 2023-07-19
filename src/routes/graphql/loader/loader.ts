@@ -64,19 +64,22 @@ export const profileLoader = (prisma: PrismaClient) => {
 
 export const memberLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<MemberType>> => {
-    const arr = await prisma.memberType.findMany({
+    let memberTypesArr = await prisma.memberType.findMany({
       where: {
         id: { in: keys as string[] |undefined },
       },
     });
+
+    if(!memberTypesArr) memberTypesArr = []
+    
     const map = new Map();
-    arr.forEach((memberType) => map.set(memberType.id, memberType));
-    const resArr = new Array<MemberType>();
+    memberTypesArr.forEach((memberType) => map.set(memberType.id, memberType));
+    const result = new Array<MemberType>();
     keys.forEach((key) => {
-      resArr.push(map.get(key));
+      result.push(map.get(key));
     });
     // return new Promise((resolve) => resolve(resArr));
-    return resArr;
+    return result;
   });
   //return new DataLoader(getMembersById);
 };
