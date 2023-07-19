@@ -1,7 +1,7 @@
 import { MemberType, Post, Prisma, PrismaClient, Profile } from '@prisma/client';
 import DataLoader from 'dataloader';
 import { Cache } from '../helpers.js';
-import {postCache} from '../index.js'
+import { postCache } from '../index.js';
 
 export const profileLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Profile>> => {
@@ -75,7 +75,7 @@ export const makePostLoader = (prisma: PrismaClient) => {
 };
 
 export const userSubscribedToLoader = (prisma: PrismaClient) => {
-  const getSubscribersById = async (keys: Readonly<string[]>) => {
+  return new DataLoader(async (keys: Readonly<string[]>) => {
     let arr = await prisma.subscribersOnAuthors.findMany({
       where: {
         subscriberId: { in: keys as string[] | undefined },
@@ -95,12 +95,14 @@ export const userSubscribedToLoader = (prisma: PrismaClient) => {
     const result = new Array<any>();
     keys.forEach((k) => result.push(map.get(k)));
     return result;
-  };
-  return new DataLoader(getSubscribersById);
+   // return new Promise((resolve) => resolve(result));
+  });
+
+  //return new DataLoader(getSubscribersById);
 };
 
 export const subscribedToUserLoader = (prisma: PrismaClient) => {
-  const getSubscriptions = async (keys: Readonly<string[]>) => {
+  return new DataLoader(async (keys: Readonly<string[]>) => {
     const temp = await prisma.subscribersOnAuthors.findMany({
       where: {
         authorId: { in: keys as string[] | undefined },
@@ -118,9 +120,10 @@ export const subscribedToUserLoader = (prisma: PrismaClient) => {
       map.set(e.authorId, subscriptionsArr);
     });
     const result = new Array<any>();
-    keys.forEach((k) => result.push(map.get(k)));
+    keys.forEach((key) => result.push(map.get(key)));
     return result;
-  };
+    //return new Promise((resolve) => resolve(result));
+  });
 
-  return new DataLoader(getSubscriptions);
+  //return new DataLoader(getSubscriptions);
 };

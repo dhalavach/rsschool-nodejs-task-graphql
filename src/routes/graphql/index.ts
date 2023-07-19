@@ -2,23 +2,22 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
 import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString, graphql, parse, validate } from 'graphql';
 import { MemberType, MemberTypeId } from './types/member.js';
-import { FastifyRequest, RouteGenericInterface } from 'fastify';
-// import { schema } from './schemas.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { ChangeProfileInput, CreateProfileInput, ProfileType } from './types/profile.js';
 import { ChangePostInput, CreatePostInput, PostType } from './types/post.js';
 import depthLimit from 'graphql-depth-limit';
 import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
 import { memberLoader, makePostLoader, profileLoader, subscribedToUserLoader, userSubscribedToLoader } from './loader/loader.js';
-import { profile } from 'console';
+import * as gqlResolveInfo from 'graphql-parse-resolve-info';
+
 import { Cache } from './helpers.js';
+import { ResolveTree, parseResolveInfo, simplifyParsedResolveInfoFragmentWithType } from 'graphql-parse-resolve-info';
 
 export const postCache = new Cache<any, any>(100); //fix types
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
-  const { prisma } = fastify; //important! loader tests fail without this
-  //const prisma = new PrismaClient();
+  const { prisma } = fastify;
 
   fastify.route({
     url: '/',
@@ -93,8 +92,54 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
           users: {
             type: new GraphQLList(UserType),
-            resolve: async (source, args, context) => {
-              return await prisma.user.findMany();
+            resolve: async (source, args, context, resolveInfo) => {
+              const simplifiedFragment = simplifyParsedResolveInfoFragmentWithType(parseResolveInfo(resolveInfo) as ResolveTree, new GraphQLNonNull(UserType));
+
+              const userIsSubscribedToSomebody = !!simplifiedFragment.fields['userSubscribedTo'];
+              const isSomebodySubscribedToUser = !!simplifiedFragment.fields['subscribedToUser'];
+              console.log('boolean flag user is subscribed to somebody: ' + userIsSubscribedToSomebody);
+              console.log('boolean flag somebody is subscribed to user: ' + isSomebodySubscribedToUser);
+
+              const users = await context.prisma.user.findMany({
+                include: {
+                  userSubscribedTo: userIsSubscribedToSomebody,
+                  subscribedToUser: isSomebodySubscribedToUser,
+                },
+              });
+
+              if (isSomebodySubscribedToUser) {
+                const map = new Map();
+                users?.map((user: any) =>
+                  map.set(
+                    user.id,
+                    user.subscribedToUser?.map((subscriber: any) => {
+                      const subscriberId = subscriber.subscriberId;
+                      return users.find((user: any) => user.id === subscriberId);
+                    }),
+                  ),
+                );
+                context.data.subs = map;
+              } else {
+                context.data.subs = undefined;
+              }
+
+              if (userIsSubscribedToSomebody) {
+                const subs = new Map();
+                users?.map((user) =>
+                  subs.set(
+                    user.id,
+                    user?.userSubscribedTo?.map((sub) => {
+                      const authorId = sub.authorId;
+                      return users.find((user) => user.id === authorId);
+                    }),
+                  ),
+                );
+                context.data.subTo = subs;
+                return users;
+              } else {
+                context.data.subTo = undefined;
+              }
+              return users;
             },
           },
 
@@ -103,7 +148,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             args: {
               id: { type: new GraphQLNonNull(UUIDType) },
             },
-            resolve: async (_, { id }, context) => {
+            resolve: async (parent, { id }, context) => {
               return await prisma.user.findFirst({
                 where: {
                   id: id,
@@ -330,7 +375,6 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       if (validationErrors && validationErrors.length !== 0) {
         return { data: '', errors: validationErrors };
       }
-      //refactor
 
       const result = await graphql({
         schema: schema,

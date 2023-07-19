@@ -32,11 +32,11 @@ export const MemberType = new GraphQLObjectType({
     },
     profiles: {
       type: new GraphQLList(ProfileType),
-      resolve: async (source, args, context) => {
+      resolve: async ({id}, args, context) => {
         // return await context.loaders.profileLoader.load(source?.id);
         return await context.prisma.profile.findMany({
           where: {
-            memberTypeId: source?.id,
+            memberTypeId: id,
           },
         });
       },

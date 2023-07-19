@@ -26,13 +26,13 @@ export const UserType = new GraphQLObjectType({
     posts: {
       type: new GraphQLList(PostType),
       resolve: async (source, args, context) => {
-        console.log('calling post loader from user with source.id:' + source.id);
+        // console.log('calling post loader from user with source.id:' + source.id);
         return await context.loaders.postLoader.load(source.id);
       },
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async (source, args, context) => {
+      resolve: async ({id}, args, context) => {
         // let temp = await new PrismaClient().subscribersOnAuthors.findMany({
         //   where: {
         //     subscriberId: id,
@@ -42,13 +42,15 @@ export const UserType = new GraphQLObjectType({
         //   },
         // });
         // return temp.map((a) => a.author);
-
-        return await context.loaders.userSubscribedToLoader.load(source?.id);
+        if (context?.data?.subTo) {
+          return context.data.subTo.get(id);
+        }
+        return await context.loaders.userSubscribedToLoader.load(id);
       },
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async (source, args, context) => {
+      resolve: async ({id}, args, context) => {
         // let temp = await new PrismaClient().subscribersOnAuthors.findMany({
         //   where: {
         //     authorId: id,
@@ -58,7 +60,11 @@ export const UserType = new GraphQLObjectType({
         //   },
         // });
         // return temp.map((s) => s.subscriber);
-        return await context.loaders.subscribedToUserLoader.load(source?.id);
+        if (context.data.subs) {
+          return context.data.subs.get(id);
+        }
+        else return await context.loaders.subscribedToUserLoader.load(id);
+        
       },
     },
   }),

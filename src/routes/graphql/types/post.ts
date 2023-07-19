@@ -24,7 +24,7 @@ export const PostType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLString),
     },
     author: {
-      type: UserType,
+      type: new GraphQLNonNull(UserType),
       resolve: async ({authorId}, args, context) => {
         return context.prisma.user.findFirst({
           where: {
