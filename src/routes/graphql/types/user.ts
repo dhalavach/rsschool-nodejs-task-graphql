@@ -26,7 +26,7 @@ export const UserType = new GraphQLObjectType({
     posts: {
       type: new GraphQLList(PostType),
       resolve: async (source, args, context) => {
-        // console.log('calling post loader from user with source.id:' + source.id);
+        console.log('calling post loader from user with source.id:' + source.id);
         return await context.loaders.postLoader.load(source.id);
       },
     },

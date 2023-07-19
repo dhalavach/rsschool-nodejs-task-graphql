@@ -1,9 +1,11 @@
 import { MemberType, Post, Prisma, PrismaClient, Profile } from '@prisma/client';
 import DataLoader from 'dataloader';
-
+import { Cache } from '../helpers.js';
+import {postCache} from '../index.js'
 
 export const profileLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Profile>> => {
+    // const LruCache = new Cache(100);
     const profiles = (await prisma.profile.findMany({
       where: {
         userId: { in: keys as string[] },
@@ -45,26 +47,30 @@ export const memberLoader = (prisma: PrismaClient) => {
 };
 
 export const makePostLoader = (prisma: PrismaClient) => {
-  return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Post[]>> => {
-    const posts: Array<Post> = await prisma.post.findMany({
-      where: {
-        authorId: { in: keys as string[] | undefined },
-      },
-    });
-    const map = new Map();
-    posts.forEach((post) => {
-      const authorArr = map.get(post.authorId) ? map.get(post.authorId) : [];
+  return new DataLoader(
+    async (keys: Readonly<string[]>): Promise<Array<Post[]>> => {
+      const posts: Array<Post> = await prisma.post.findMany({
+        where: {
+          authorId: { in: keys as string[] | undefined },
+        },
+      });
+      const map = new Map();
+      posts.forEach((post) => {
+        const authorArr = map.get(post.authorId) ? map.get(post.authorId) : [];
 
-      authorArr.push(post);
-      map.set(post.authorId, authorArr);
-    });
-    const result = new Array<Post[]>();
-    keys.forEach((key) => {
-      result.push(map.get(key) as Post[]);
-    });
-    //return new Promise((resolve) => resolve(result));
-    return result;
-  });
+        authorArr.push(post);
+        map.set(post.authorId, authorArr);
+      });
+      const result = new Array<Post[]>();
+      keys.forEach((key) => {
+        result.push(map.get(key) as Post[]);
+      });
+      //return new Promise((resolve) => resolve(result));
+      return result;
+    },
+    // { cacheMap: postCache },
+  );
+
   //return new DataLoader(getPostsById);
 };
 

@@ -12,6 +12,9 @@ import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
 import { memberLoader, makePostLoader, profileLoader, subscribedToUserLoader, userSubscribedToLoader } from './loader/loader.js';
 import { profile } from 'console';
+import { Cache } from './helpers.js';
+
+export const postCache = new Cache<any, any>(100); //fix types
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
   const { prisma } = fastify; //important! loader tests fail without this
