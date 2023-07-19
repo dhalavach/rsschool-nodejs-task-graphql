@@ -1,16 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { createGqlResponseSchema, gqlResponseSchema } from './schemas.js';
-import {
-  GraphQLBoolean,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLSchema,
-  GraphQLString,
-  graphql,
-  parse,
-  validate,
-} from 'graphql';
+import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema, GraphQLString, graphql, parse, validate } from 'graphql';
 import { MemberType, MemberTypeId } from './types/member.js';
 import { FastifyRequest, RouteGenericInterface } from 'fastify';
 // import { schema } from './schemas.js';
@@ -20,18 +10,12 @@ import { ChangePostInput, CreatePostInput, PostType } from './types/post.js';
 import depthLimit from 'graphql-depth-limit';
 import { ChangeUserInput, CreateUserInput, UserType } from './types/user.js';
 import { UUIDType } from './types/uuid.js';
-import {
-  memberLoader,
-  postLoader,
-  profileLoader,
-  subscribedToUserLoader,
-  userSubscribedToLoader,
-} from './loader/loader.js';
+import { memberLoader, makePostLoader, profileLoader, subscribedToUserLoader, userSubscribedToLoader } from './loader/loader.js';
 import { profile } from 'console';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
-  // const { prisma } = fastify;
-  const prisma = new PrismaClient();
+  const { prisma } = fastify; //important! loader tests fail without this
+  //const prisma = new PrismaClient();
 
   fastify.route({
     url: '/',
@@ -106,7 +90,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
 
           users: {
             type: new GraphQLList(UserType),
-            resolve: async () => {
+            resolve: async (source, args, context) => {
               return await prisma.user.findMany();
             },
           },
@@ -116,7 +100,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             args: {
               id: { type: new GraphQLNonNull(UUIDType) },
             },
-            resolve: async (parent, { id }) => {
+            resolve: async (_, { id }, context) => {
               return await prisma.user.findFirst({
                 where: {
                   id: id,
@@ -353,7 +337,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           loaders: {
             profileLoader: profileLoader(prisma),
             memberLoader: memberLoader(prisma),
-            postLoader: postLoader(prisma),
+            postLoader: makePostLoader(prisma),
             userSubscribedToLoader: userSubscribedToLoader(prisma),
             subscribedToUserLoader: subscribedToUserLoader(prisma),
           },

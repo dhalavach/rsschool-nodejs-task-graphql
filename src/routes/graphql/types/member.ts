@@ -22,7 +22,7 @@ export const MemberType = new GraphQLObjectType({
   name: 'MemberType',
   fields: () => ({
     id: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: MemberTypeId,
     },
     discount: {
       type: new GraphQLNonNull(GraphQLFloat),
@@ -32,10 +32,11 @@ export const MemberType = new GraphQLObjectType({
     },
     profiles: {
       type: new GraphQLList(ProfileType),
-      resolve: async ({ id }) => {
-        return await new PrismaClient().profile.findMany({
+      resolve: async (source, args, context) => {
+        // return await context.loaders.profileLoader.load(source?.id);
+        return await context.prisma.profile.findMany({
           where: {
-            memberTypeId: id,
+            memberTypeId: source?.id,
           },
         });
       },

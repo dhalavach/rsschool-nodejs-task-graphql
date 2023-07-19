@@ -1,12 +1,4 @@
-import {
-  GraphQLObjectType,
-  GraphQLString,
-  GraphQLFloat,
-  GraphQLInt,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLInputObjectType,
-} from 'graphql';
+import { GraphQLObjectType, GraphQLString, GraphQLFloat, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import { ProfileType } from './profile.js';
 import { PostType } from './post.js';
 import { SubscribersOnAuthorsType } from './subscribers.js';
@@ -28,13 +20,14 @@ export const UserType = new GraphQLObjectType({
     profile: {
       type: ProfileType,
       resolve: async (source, args, context) => {
-        return await context.loaders.profileLoader.load(source?.id);
+        return await context.loaders.profileLoader.load(source.id);
       },
     },
     posts: {
       type: new GraphQLList(PostType),
       resolve: async (source, args, context) => {
-        return await context.loaders.postLoader.load(source?.id);
+        // console.log('calling post loader from user with source.id:' + source.id);
+        return await context.loaders.postLoader.load(source.id);
       },
     },
     userSubscribedTo: {

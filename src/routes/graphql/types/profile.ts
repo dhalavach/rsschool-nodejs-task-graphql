@@ -1,9 +1,4 @@
-import {
-  GraphQLFloat,
-  GraphQLInputObjectType,
-  GraphQLNonNull,
-  GraphQLObjectType,
-} from 'graphql';
+import { GraphQLFloat, GraphQLInputObjectType, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { GraphQLBoolean, GraphQLID, GraphQLInt, GraphQLString } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { UserType } from './user.js';
@@ -19,9 +14,9 @@ export const ProfileType = new GraphQLObjectType({
     userId: { type: new GraphQLNonNull(UUIDType) },
 
     user: {
-      type: UserType,
-      resolve: async ({ userId }) => {
-        return new PrismaClient().user.findFirst({
+      type: new GraphQLNonNull(UserType),
+      resolve: async ({ userId }, args, context) => {
+        return context.prisma.user.findFirst({
           where: {
             id: userId,
           },
@@ -32,6 +27,7 @@ export const ProfileType = new GraphQLObjectType({
     memberType: {
       type: MemberType,
       resolve: async (source, args, context) => {
+        // console.log('calling member type loader from profile type...');
         const result = await context.loaders.memberLoader.load(source.memberTypeId); //id?
         return result;
         // return await context.prisma.memberType.findFirst({
@@ -41,7 +37,7 @@ export const ProfileType = new GraphQLObjectType({
         // });
       },
     },
-    memberTypeId: { type: new GraphQLNonNull(GraphQLString) },
+    memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
   }),
 });
 

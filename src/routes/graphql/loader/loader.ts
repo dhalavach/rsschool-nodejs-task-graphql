@@ -1,46 +1,6 @@
 import { MemberType, Post, Prisma, PrismaClient, Profile } from '@prisma/client';
 import DataLoader from 'dataloader';
 
-// export const profileLoader = (prisma) => {
-//   return new DataLoader(async (keys: Readonly<string[]>) => {
-//     const profiles = await prisma.profile.findMany({
-//       where: {
-//         userId: { in: keys as Prisma.Enumerable<string> | undefined },
-//       },
-//     });
-
-//     const profileMap = new Map();
-
-//     profiles.forEach((profile) => {
-//       profileMap.set(profile.userId, profile);
-//     });
-//     const profilesArr = new Array<any>();
-//     keys.forEach((key) => {
-//       profilesArr.push(profileMap.get(key));
-//     });
-//     return new Promise((resolve) => resolve(profilesArr));
-//   });
-// };
-
-//add literal type
-// export const createLoader = (loaderType: 'memberType') => {
-//   return new DataLoader(async (keys: Readonly<string[]>) => {
-//     const typeArr = await new PrismaClient()[loaderType].findMany({
-//       where: {
-//         id: { in: keys as Prisma.Enumerable<string> | undefined },
-//       },
-//     });
-//     const typeMap = new Map();
-//     //@ts-ignore
-//     typeArr.forEach((t) => typeMap.set([loaderType].id, t));
-//     const resArr = new Array<any>();
-//     keys.forEach((key) => {
-//       resArr.push(typeMap.get(key));
-//     });
-
-//     return new Promise((resolve) => resolve(resArr));
-//   });
-// };
 
 export const profileLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Profile>> => {
@@ -57,7 +17,7 @@ export const profileLoader = (prisma: PrismaClient) => {
     keys.forEach((key) => {
       arr.push(map.get(key) as Profile);
     });
-    // return new Promise((resolve) => resolve(arr));
+    //return new Promise((resolve) => resolve(arr));
     return arr;
   });
 };
@@ -66,25 +26,25 @@ export const memberLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<MemberType>> => {
     let memberTypesArr = await prisma.memberType.findMany({
       where: {
-        id: { in: keys as string[] |undefined },
+        id: { in: keys as string[] | undefined },
       },
     });
 
-    if(!memberTypesArr) memberTypesArr = []
-    
+    // if (!memberTypesArr) memberTypesArr = [];
+
     const map = new Map();
     memberTypesArr.forEach((memberType) => map.set(memberType.id, memberType));
     const result = new Array<MemberType>();
     keys.forEach((key) => {
       result.push(map.get(key));
     });
-    // return new Promise((resolve) => resolve(resArr));
+    //return new Promise((resolve) => resolve(result));
     return result;
   });
   //return new DataLoader(getMembersById);
 };
 
-export const postLoader = (prisma: PrismaClient) => {
+export const makePostLoader = (prisma: PrismaClient) => {
   return new DataLoader(async (keys: Readonly<string[]>): Promise<Array<Post[]>> => {
     const posts: Array<Post> = await prisma.post.findMany({
       where: {
@@ -93,8 +53,8 @@ export const postLoader = (prisma: PrismaClient) => {
     });
     const map = new Map();
     posts.forEach((post) => {
-      // const authorArr = map.get(post.authorId) || [];
       const authorArr = map.get(post.authorId) ? map.get(post.authorId) : [];
+
       authorArr.push(post);
       map.set(post.authorId, authorArr);
     });
@@ -102,7 +62,7 @@ export const postLoader = (prisma: PrismaClient) => {
     keys.forEach((key) => {
       result.push(map.get(key) as Post[]);
     });
-    // return new Promise((resolve) => resolve(result));
+    //return new Promise((resolve) => resolve(result));
     return result;
   });
   //return new DataLoader(getPostsById);
@@ -112,7 +72,7 @@ export const userSubscribedToLoader = (prisma: PrismaClient) => {
   const getSubscribersById = async (keys: Readonly<string[]>) => {
     let arr = await prisma.subscribersOnAuthors.findMany({
       where: {
-        subscriberId: { in: keys as string[] |undefined },
+        subscriberId: { in: keys as string[] | undefined },
       },
       select: {
         author: true,
